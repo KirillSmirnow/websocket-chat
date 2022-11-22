@@ -32,6 +32,12 @@ public class User {
 
     @NotNull
     @NotBlank
+    @Size(min = 16, max = 256)
+    @Setter
+    private String hashedPassword;
+
+    @NotNull
+    @NotBlank
     @Size(max = 32)
     @Setter
     private String name;

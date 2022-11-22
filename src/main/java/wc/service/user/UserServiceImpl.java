@@ -1,6 +1,7 @@
 package wc.service.user;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import wc.model.User;
@@ -12,14 +13,15 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final CurrentUserService currentUserService;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
     public void registerUser(UserRegistration registration) {
         var user = new User();
         user.setNickname(registration.getNickname());
+        user.setHashedPassword(passwordEncoder.encode(registration.getPassword()));
         user.setName(registration.getName());
-        // TODO: save password
         userRepository.save(user);
     }
 
@@ -35,7 +37,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void updateCurrentUserPassword(UserPasswordUpdate update) {
         var user = currentUserService.get();
-        // TODO
+        user.setHashedPassword(passwordEncoder.encode(update.getPassword()));
     }
 
     @Override

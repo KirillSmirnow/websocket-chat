@@ -31,6 +31,7 @@ public class PartialQueryExecutorImpl implements PartialQueryExecutor {
         var criteriaBuilder = entityManager.getCriteriaBuilder();
         var query = criteriaBuilder.createQuery(Long.class);
         var entity = query.from(queryBuilder.getEntityClass());
+        query.select(criteriaBuilder.count(entity));
         query.where(queryBuilder.getFilter(entity, criteriaBuilder));
         return entityManager.createQuery(query).getSingleResult();
     }

@@ -1,6 +1,7 @@
 package wc.service.session;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import wc.model.Session;
@@ -16,12 +17,16 @@ public class SessionServiceImpl implements SessionService {
 
     private final UserRepository userRepository;
     private final SessionRepository sessionRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
     public Id<UUID> startSession(PasswordSignIn signIn) {
         var user = userRepository.findByNickname(signIn.getNickname()).orElseThrow();
-        // TODO: check password
+        var passwordCorrect = passwordEncoder.matches(signIn.getPassword(), user.getHashedPassword());
+        if (!passwordCorrect) {
+            throw new RuntimeException("Incorrect password");
+        }
         var session = sessionRepository.save(new Session(user));
         return session::getId;
     }

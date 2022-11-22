@@ -11,6 +11,6 @@ public class UserPasswordUpdate {
 
     @NotNull
     @NotBlank
-    @Size(max = 32)
+    @Size(min = 8, max = 32)
     private final String password;
 }

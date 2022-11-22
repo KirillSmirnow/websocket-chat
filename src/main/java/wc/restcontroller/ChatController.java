@@ -1,7 +1,9 @@
 package wc.restcontroller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import wc.security.annotation.AuthenticationRequired;
 import wc.service.chat.ChatCreation;
 import wc.service.chat.ChatService;
 import wc.service.chat.ChatUpdate;
@@ -25,56 +27,73 @@ public class ChatController {
     private final MessageService messageService;
 
     @PostMapping
+    @AuthenticationRequired
     public ChatView createChat(@RequestBody ChatCreation creation) {
         var id = chatService.createChat(creation);
         return chatService.getChat(id.value());
     }
 
     @PutMapping("/{id}")
+    @AuthenticationRequired
+    @PreAuthorize("@chatMemberAuthorizer.isCurrentUserMemberOfChat(#id)")
     public ChatView updateChat(@PathVariable long id, @RequestBody ChatUpdate update) {
         chatService.updateChat(id, update);
         return chatService.getChat(id);
     }
 
     @PostMapping("/{id}/invitation-code")
+    @AuthenticationRequired
+    @PreAuthorize("@chatMemberAuthorizer.isCurrentUserMemberOfChat(#id)")
     public ChatView updateInvitationCode(@PathVariable long id) {
         chatService.updateInvitationCode(id);
         return chatService.getChat(id);
     }
 
     @GetMapping("/{id}")
+    @AuthenticationRequired
+    @PreAuthorize("@chatMemberAuthorizer.isCurrentUserMemberOfChat(#id)")
     public ChatView getChat(@PathVariable long id) {
         return chatService.getChat(id);
     }
 
     @GetMapping
+    @AuthenticationRequired
     public PartialQueryResult<ChatView> getCurrentUserChats(PartialQueryParameters parameters) {
         return chatService.getCurrentUserChats(parameters);
     }
 
     @PutMapping("/joining")
+    @AuthenticationRequired
     public ChatView joinChat(@RequestBody ChatJoining joining) {
         var id = chatMemberService.joinChat(joining);
         return chatService.getChat(id.value());
     }
 
     @PutMapping("/{id}/leaving")
+    @AuthenticationRequired
     public ChatView leaveChat(@PathVariable long id) {
         chatMemberService.leaveChat(id);
         return chatService.getChat(id);
     }
 
     @GetMapping("/{id}/members")
+    @AuthenticationRequired
+    @PreAuthorize("@chatMemberAuthorizer.isCurrentUserMemberOfChat(#id)")
     public PartialQueryResult<UserView> getChatMembers(@PathVariable long id, PartialQueryParameters parameters) {
         return chatMemberService.getChatMembers(id, parameters);
     }
 
     @PostMapping("{id}/messages")
-    public void sendMessage(@PathVariable long id, @RequestBody MessageSending sending) {
-        messageService.sendMessage(id, sending);
+    @AuthenticationRequired
+    @PreAuthorize("@chatMemberAuthorizer.isCurrentUserMemberOfChat(#id)")
+    public MessageView sendMessage(@PathVariable long id, @RequestBody MessageSending sending) {
+        var messageId = messageService.sendMessage(id, sending);
+        return messageService.getMessage(messageId.value());
     }
 
     @GetMapping("{id}/messages")
+    @AuthenticationRequired
+    @PreAuthorize("@chatMemberAuthorizer.isCurrentUserMemberOfChat(#id)")
     public PartialQueryResult<MessageView> getChatMessages(@PathVariable long id, PartialQueryParameters parameters) {
         return messageService.getChatMessages(id, parameters);
     }
