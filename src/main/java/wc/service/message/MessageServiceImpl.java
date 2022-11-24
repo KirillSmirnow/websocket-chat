@@ -3,6 +3,7 @@ package wc.service.message;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import wc.model.ChatMember;
 import wc.model.Message;
 import wc.repository.ChatMemberRepository;
 import wc.repository.ChatRepository;
@@ -17,6 +18,8 @@ import wc.utility.query.partial.PartialQueryResult;
 import java.util.Set;
 import java.util.UUID;
 
+import static java.util.stream.Collectors.toSet;
+
 @Service
 @RequiredArgsConstructor
 public class MessageServiceImpl implements MessageService {
@@ -27,7 +30,7 @@ public class MessageServiceImpl implements MessageService {
     private final UserService userService;
     private final CurrentUserService currentUserService;
     private final PartialQueryExecutor partialQueryExecutor;
-    private final Set<MessageSentListener> messageSentListeners;
+    private final Set<NewMessageNotifier> newMessageNotifiers;
 
     @Override
     @Transactional
@@ -36,14 +39,19 @@ public class MessageServiceImpl implements MessageService {
         var user = currentUserService.get();
         var chatMember = chatMemberRepository.findByChatAndUser(chat, user).orElseThrow();
         var message = messageRepository.save(new Message(chatMember, sending.getText()));
-        messageSentListeners.forEach(listener -> listener.onMessageSent(message));
+        notifyAboutNewMessage(message);
         return message::getId;
     }
 
-    @Override
-    public MessageView getMessage(UUID id) {
-        var message = messageRepository.findById(id).orElseThrow();
-        return toView(message);
+    private void notifyAboutNewMessage(Message message) {
+        var messageView = toView(message);
+        var chat = message.getChatMember().getChat();
+        var recipients = chatMemberRepository.findByChat(chat).stream()
+                .map(ChatMember::getUser)
+                .collect(toSet());
+        for (var recipient : recipients) {
+            newMessageNotifiers.forEach(notifier -> notifier.notifyAboutNewMessage(recipient.getId(), messageView));
+        }
     }
 
     private MessageView toView(Message message) {
@@ -53,6 +61,12 @@ public class MessageServiceImpl implements MessageService {
                 .sentAt(message.getSentAt())
                 .text(message.getText())
                 .build();
+    }
+
+    @Override
+    public MessageView getMessage(UUID id) {
+        var message = messageRepository.findById(id).orElseThrow();
+        return toView(message);
     }
 
     @Override
