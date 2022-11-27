@@ -1,0 +1,20 @@
+version: '3'
+services:
+  main:
+    build: .
+    restart: always
+    environment:
+      PROFILE:
+    ports:
+      - ${PORT:-38676}:8080
+  postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_DB: wc
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres:/var/lib/postgresql/data
+volumes:
+  postgres:
