@@ -6,7 +6,7 @@ services:
     environment:
       PROFILE:
     ports:
-      - ${PORT:-38676}:8080
+      - 127.0.0.1:${PORT:-38676}:8080
   postgres:
     image: postgres:15
     restart: always
