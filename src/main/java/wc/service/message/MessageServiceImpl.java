@@ -9,6 +9,7 @@ import wc.repository.ChatMemberRepository;
 import wc.repository.ChatRepository;
 import wc.repository.MessageRepository;
 import wc.service.Id;
+import wc.service.chat.ChatService;
 import wc.service.user.CurrentUserService;
 import wc.service.user.UserService;
 import wc.utility.query.partial.PartialQueryExecutor;
@@ -26,6 +27,7 @@ public class MessageServiceImpl implements MessageService {
 
     private final MessageRepository messageRepository;
     private final ChatRepository chatRepository;
+    private final ChatService chatService;
     private final ChatMemberRepository chatMemberRepository;
     private final UserService userService;
     private final CurrentUserService currentUserService;
@@ -57,6 +59,7 @@ public class MessageServiceImpl implements MessageService {
     private MessageView toView(Message message) {
         return MessageView.builder()
                 .id(message.getId())
+                .chat(chatService.getChat(message.getChatMember().getChat().getId()))
                 .sender(userService.getUser(message.getChatMember().getUser().getId()))
                 .sentAt(message.getSentAt())
                 .text(message.getText())
