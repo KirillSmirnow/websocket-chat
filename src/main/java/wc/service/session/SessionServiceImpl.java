@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import wc.exception.UserException;
 import wc.model.Session;
 import wc.repository.SessionRepository;
 import wc.repository.UserRepository;
@@ -22,10 +23,11 @@ public class SessionServiceImpl implements SessionService {
     @Override
     @Transactional
     public Id<UUID> startSession(PasswordSignIn signIn) {
-        var user = userRepository.findByNickname(signIn.getNickname()).orElseThrow();
+        var user = userRepository.findByNickname(signIn.getNickname())
+                .orElseThrow(() -> new UserException("Account not found"));
         var passwordCorrect = passwordEncoder.matches(signIn.getPassword(), user.getHashedPassword());
         if (!passwordCorrect) {
-            throw new RuntimeException("Incorrect password");
+            throw new UserException("Wrong password");
         }
         var session = sessionRepository.save(new Session(user));
         return session::getId;

@@ -3,6 +3,7 @@ package wc.service.chatmember;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import wc.exception.UserException;
 import wc.model.ChatMember;
 import wc.repository.ChatMemberRepository;
 import wc.repository.ChatRepository;
@@ -28,7 +29,8 @@ public class ChatMemberServiceImpl implements ChatMemberService {
     @Transactional
     public Id<Long> joinChat(ChatJoining joining) {
         var user = currentUserService.get();
-        var chat = chatRepository.findByInvitationCode(joining.getInvitationCode()).orElseThrow();
+        var chat = chatRepository.findByInvitationCode(joining.getInvitationCode())
+                .orElseThrow(() -> new UserException("Chat not found"));
         chatMemberRepository.save(new ChatMember(chat, user));
         return chat::getId;
     }
